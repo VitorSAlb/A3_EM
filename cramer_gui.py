@@ -16,32 +16,19 @@ def resolver_cramer_2x2(a, b):
     return f"x = {x:.2f}, y = {y:.2f}"
 
 # Função para resolver sistemas 3x3 pela Regra de Cramer
-# Função corrigida para resolver sistemas 3x3 com Regra de Cramer
 def resolver_cramer_3x3(a, b):
     A = np.array(a).reshape(3, 3)
     B = np.array(b)
     det = np.linalg.det(A)
     if det == 0:
         return "Sistema sem solução única"
-
-    A_x = A.copy()
-    A_y = A.copy()
-    A_z = A.copy()
-
-    A_x[:, 0] = B
-    A_y[:, 1] = B
-    A_z[:, 2] = B
-
-    Dx = np.linalg.det(A_x)
-    Dy = np.linalg.det(A_y)
-    Dz = np.linalg.det(A_z)
-
+    Dx = np.linalg.det(np.column_stack((B, A[:,1], A[:,2])))
+    Dy = np.linalg.det(np.column_stack((A[:,0], B, A[:,2])))
+    Dz = np.linalg.det(np.column_stack((A[:,0], A[:,1], B)))
     x = Dx / det
     y = Dy / det
     z = Dz / det
-
     return f"x = {x:.2f}, y = {y:.2f}, z = {z:.2f}"
-
 
 # Função que lê os valores digitados nos campos
 def ler_valores(campos):
@@ -58,14 +45,13 @@ def resolver():
     if not valores:
         return
     if tipo == "2x2":
-        coef = valores[0:4]  # a11, a12, a21, a22
-        termos = valores[4:6]  # b1, b2
+        coef = valores[:4]
+        termos = valores[4:]
         resultado.set(resolver_cramer_2x2(coef, termos))
     elif tipo == "3x3":
-        coef = valores[0:9]  # a11, ..., a33
-        termos = valores[9:12]  # b1, b2, b3
+        coef = valores[:9]
+        termos = valores[9:]
         resultado.set(resolver_cramer_3x3(coef, termos))
-
 
 # Função que cria dinamicamente os campos de entrada com rótulos
 def atualizar_interface():
@@ -74,40 +60,24 @@ def atualizar_interface():
     global entradas
     entradas = []
     tipo = tipo_var.get()
-
+    
     if tipo == "2x2":
-        # Coeficientes
-        for i in range(2):
-            for j in range(2):
-                label = tk.Label(frame_campos, text=f"a{i+1}{j+1}", bg="#1e1e1e", fg="white")
-                label.grid(row=i, column=j * 2)
-                campo = tk.Entry(frame_campos, width=5, bg="#2d2d2d", fg="white", insertbackground="white")
-                campo.grid(row=i, column=j * 2 + 1)
-                entradas.append(campo)
-        # Termos independentes
-        for i in range(2):
-            label = tk.Label(frame_campos, text=f"b{i+1}", bg="#1e1e1e", fg="white")
-            label.grid(row=i, column=4)
-            campo = tk.Entry(frame_campos, width=5, bg="#2d2d2d", fg="white", insertbackground="white")
-            campo.grid(row=i, column=5)
-            entradas.append(campo)
-
+        labels = ["a11", "a12", "a21", "a22", "b1", "b2"]
+        posicoes = [(0,0), (0,2), (1,0), (1,2), (0,4), (1,4)]
     elif tipo == "3x3":
-        # Coeficientes
-        for i in range(3):
-            for j in range(3):
-                label = tk.Label(frame_campos, text=f"a{i+1}{j+1}", bg="#1e1e1e", fg="white")
-                label.grid(row=i, column=j * 2)
-                campo = tk.Entry(frame_campos, width=5, bg="#2d2d2d", fg="white", insertbackground="white")
-                campo.grid(row=i, column=j * 2 + 1)
-                entradas.append(campo)
-        # Termos independentes
-        for i in range(3):
-            label = tk.Label(frame_campos, text=f"b{i+1}", bg="#1e1e1e", fg="white")
-            label.grid(row=i, column=6)
-            campo = tk.Entry(frame_campos, width=5, bg="#2d2d2d", fg="white", insertbackground="white")
-            campo.grid(row=i, column=7)
-            entradas.append(campo)
+        labels = ["a11", "a12", "a13", "a21", "a22", "a23", "a31", "a32", "a33", "b1", "b2", "b3"]
+        posicoes = [
+            (0,0), (0,2), (0,4),
+            (1,0), (1,2), (1,4),
+            (2,0), (2,2), (2,4),
+            (0,6), (1,6), (2,6)
+        ]
+
+    for i, label in enumerate(labels):
+        tk.Label(frame_campos, text=label, bg="#1e1e1e", fg="white").grid(row=posicoes[i][0], column=posicoes[i][1])
+        entry = tk.Entry(frame_campos, width=5, bg="#2d2d2d", fg="white", insertbackground="white")
+        entry.grid(row=posicoes[i][0], column=posicoes[i][1]+1)
+        entradas.append(entry)
 
 
 # Interface principal com tema escuro
