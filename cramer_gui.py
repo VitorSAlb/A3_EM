@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, PhotoImage
 import numpy as np
 
 # Função para resolver sistemas 2x2 pela Regra de Cramer
@@ -30,7 +30,6 @@ def resolver_cramer_3x3(a, b):
     z = Dz / det
     return f"x = {x:.2f}, y = {y:.2f}, z = {z:.2f}"
 
-# Função que lê os valores digitados nos campos
 def ler_valores(campos):
     try:
         return [float(campo.get()) for campo in campos]
@@ -38,7 +37,6 @@ def ler_valores(campos):
         messagebox.showerror("Erro", "Preencha todos os campos corretamente.")
         return None
 
-# Função que resolve o sistema com base na escolha
 def resolver():
     tipo = tipo_var.get()
     valores = ler_valores(entradas)
@@ -53,18 +51,19 @@ def resolver():
         termos = valores[9:]
         resultado.set(resolver_cramer_3x3(coef, termos))
 
-# Função que cria dinamicamente os campos de entrada com rótulos
 def atualizar_interface():
     for widget in frame_campos.winfo_children():
         widget.destroy()
     global entradas
     entradas = []
     tipo = tipo_var.get()
-    
+
     if tipo == "2x2":
+        janela.geometry("500x300")
         labels = ["a11", "a12", "a21", "a22", "b1", "b2"]
         posicoes = [(0,0), (0,2), (1,0), (1,2), (0,4), (1,4)]
     elif tipo == "3x3":
+        janela.geometry("500x330")
         labels = ["a11", "a12", "a13", "a21", "a22", "a23", "a31", "a32", "a33", "b1", "b2", "b3"]
         posicoes = [
             (0,0), (0,2), (0,4),
@@ -74,32 +73,72 @@ def atualizar_interface():
         ]
 
     for i, label in enumerate(labels):
-        tk.Label(frame_campos, text=label, bg="#1e1e1e", fg="white").grid(row=posicoes[i][0], column=posicoes[i][1])
-        entry = tk.Entry(frame_campos, width=5, bg="#2d2d2d", fg="white", insertbackground="white")
-        entry.grid(row=posicoes[i][0], column=posicoes[i][1]+1)
+        tk.Label(frame_campos, text=label, bg="#1e1e1e", fg="white", font=("Helvetica", 10, "bold")).grid(
+            row=posicoes[i][0], column=posicoes[i][1], padx=5, pady=5, sticky="e"
+        )
+        entry = tk.Entry(frame_campos, width=5, bg="#2d2d2d", fg="white", insertbackground="white",
+                         relief="flat", highlightbackground="#444", highlightthickness=1)
+        entry.grid(row=posicoes[i][0], column=posicoes[i][1]+1, padx=5, pady=5)
         entradas.append(entry)
 
-
-# Interface principal com tema escuro
 janela = tk.Tk()
 janela.title("Calculadora de Sistemas Lineares")
 janela.configure(bg="#1e1e1e")
+janela.geometry("500x300")
+janela.resizable(False, False)
+
+try:
+    icone = tk.PhotoImage(file='calc.png')
+    janela.iconphoto(False, icone)
+except Exception as e:
+    print(f"Erro ao carregar ícone: {e}")
+
+def centralizar(janela):
+    janela.update_idletasks()
+    largura = janela.winfo_width()
+    altura = janela.winfo_height()
+    x = (janela.winfo_screenwidth() // 2) - (largura // 2)
+    y = (janela.winfo_screenheight() // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
+
+tk.Label(janela, text="Calculadora de Sistemas Lineares", bg="#1e1e1e", fg="white",
+         font=("Helvetica", 16, "bold")).pack(pady=10)
 
 tipo_var = tk.StringVar(value="2x2")
-tk.Label(janela, text="Escolha o tipo de sistema:", bg="#1e1e1e", fg="white").pack(pady=5)
-seletor = ttk.Combobox(janela, textvariable=tipo_var, values=["2x2", "3x3"], state="readonly")
-seletor.pack()
-seletor.bind("<<ComboboxSelected>>", lambda e: atualizar_interface())
+tk.Label(janela, text="Escolha o tipo de sistema:", bg="#1e1e1e", fg="white", font=("Helvetica", 11)).pack(pady=5)
 
-frame_campos = tk.Frame(janela, bg="#1e1e1e")
+seletor = ttk.Combobox(janela, textvariable=tipo_var, values=["2x2", "3x3"], state="readonly", font=("Helvetica", 10))
+seletor.pack(pady=5)
+
+def on_select(event):
+    atualizar_interface()
+    seletor.selection_clear()
+
+seletor.bind("<<ComboboxSelected>>", on_select)
+
+frame_campos = tk.Frame(janela, bg="#1e1e1e", bd=1, relief="solid")
 frame_campos.pack(pady=10)
 
-ttk.Style().theme_use('clam')
-
-tk.Button(janela, text="Resolver", command=resolver).pack(pady=10)
-
 resultado = tk.StringVar()
-tk.Label(janela, textvariable=resultado, font=("Arial", 14), bg="#1e1e1e", fg="lime").pack(pady=5)
+tk.Label(janela, textvariable=resultado, font=("Helvetica", 14, "bold"), bg="#1e1e1e", fg="lime").pack(pady=5)
+
+resolver_btn = tk.Button(janela, text="Resolver", command=resolver,
+                         bg="#2d2d2d", fg="white", font=("Helvetica", 11, "bold"),
+                         relief="flat", activebackground="#3e3e3e", padx=10, pady=5)
+resolver_btn.pack(pady=10)
+
+style = ttk.Style()
+style.theme_use('clam')
+style.configure("TCombobox",
+                fieldbackground="#2d2d2d",
+                background="#2d2d2d",
+                foreground="white")
+
+style.map('TCombobox', 
+          fieldbackground=[('readonly', '#2d2d2d')],
+          foreground=[('readonly', 'white')])
 
 atualizar_interface()
+centralizar(janela)
+
 janela.mainloop()
